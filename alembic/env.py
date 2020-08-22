@@ -3,10 +3,9 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from models.base import BaseModel
-from models.hodler import Hodler  # noqa
-from models.token import Token  # noqa
-from models.transfer import TokenTranser  # noqa
+from app.models.base import BaseModel
+from app.models.hodler import Hodler  # noqa
+from app.models.token import Token  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 
-from models.base import BaseModel
+from app.models.base import BaseModel
 
 
 class Token(BaseModel):
