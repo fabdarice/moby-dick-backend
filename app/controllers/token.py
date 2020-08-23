@@ -1,21 +1,20 @@
+from dataclasses import asdict
 from typing import Any, Dict
 
-from app.models.token import Token
-from app.utils.session import SessionManager
+from app.services.token import TokenService
+from app.tasks.hodler import create_token_hodlers_task
+from app.ttypes.token import Token
 
 
 class TokenController:
     def __init__(self) -> None:
-        pass
+        self.token_svc = TokenService()
 
     def create_token(self, payload: Dict[str, Any]) -> None:
-        token = Token(
-            name=payload['name'],
-            contract_address=payload['contract_address'],
-            uniswap_address=payload['uniswap_address'],
-            events=payload['events'],
-            block_creation=payload['block_creation'],
-        )
+        """Create Token in the database and then fetch all events since creation"""
+        token = self.token_svc.create_token(payload)
+        create_token_hodlers_task.apply_async(args=[asdict(token)])
 
-        with SessionManager.session() as session:
-            session.add(token)
+    def get_token_by_name(self, name: str) -> Token:
+        """Retrieve a Token row by its name"""
+        return self.token_svc.get_token_by_name(name)

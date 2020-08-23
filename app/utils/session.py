@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -6,18 +7,22 @@ from sqlalchemy.orm import sessionmaker
 
 from app.utils.borg import Borg
 
+DATABASE_URI = os.environ.get('DATABASE_URI')
+
 
 class SessionManagerBorg(Borg):
     def __init__(self) -> None:
         super().__init__()
 
         if not hasattr(self, 'db_url'):
-            self.db_url: str = ''
+            self.db_url = ''
             self.engine = None
-            self._session = None
+            self.maker = None
 
     @contextmanager
     def use_connection(self) -> Iterator:
+        if self.engine is None:
+            self.configure(DATABASE_URI)
         connection = self.engine.connect()  # type: ignore
         try:
             yield connection
@@ -34,6 +39,9 @@ class SessionManagerBorg(Borg):
 
     @contextmanager
     def session(self) -> Iterator:
+        if self.maker is None:
+            self.configure(DATABASE_URI)
+
         db_session = self.maker and self.maker()
         try:
             yield db_session
