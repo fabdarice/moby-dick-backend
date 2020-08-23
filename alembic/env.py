@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -25,6 +26,11 @@ target_metadata = BaseModel.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+# here we allow ourselves to pass interpolation vars to alembic.ini
+# fron the host env
+section = config.config_ini_section
+config.set_section_option(section, 'DATABASE_URL', os.environ.get('DATABASE_URL'))
 
 
 def run_migrations_offline():
