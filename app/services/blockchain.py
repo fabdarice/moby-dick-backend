@@ -52,9 +52,9 @@ class BlockchainService:
         counter = 0
         while token_last_block != eth_last_block:
             try:
-                to_block = token_last_block + BLOCK_THRESHOLD
+                to_block = min(token_last_block + BLOCK_THRESHOLD, eth_last_block)
                 transfer_filter = contract.events.Transfer.createFilter(
-                    fromBlock=token_last_block, toBlock=to_block
+                    fromBlock=token_last_block + 1, toBlock=to_block
                 )
                 event_list = transfer_filter.get_all_entries()
                 for event in event_list:
@@ -71,6 +71,14 @@ class BlockchainService:
                 logging.error(f'Web3 connection failed {str(e)}. Reconnecting..')
                 self.connection()
                 continue
+        filter_empty_hodlers = []
+        for hodler_addr, hodler in hodlers.items():
+            if hodler['amount'] < 100000000000000:
+                filter_empty_hodlers.append(hodler_addr)
+            hodler['amount'] = str(hodler['amount']).zfill(32)
+
+        for hodler_addr in filter_empty_hodlers:
+            del hodlers[hodler_addr]
         self.hodler_svc.save_hodlers(list(hodlers.values()))
         token.synced = True
         self.token_svc.update_token(token)

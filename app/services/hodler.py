@@ -11,10 +11,15 @@ class HodlerService:
     def __init__(self) -> None:
         pass
 
-    def find_by_token_name(self, token_name: str) -> List[Hodler]:
-        """ Find all existing Hodlers by token """
+    def find_top_hodlers_by_token_name(self, token_name: str, limit: int = 100) -> List[Hodler]:
+        """ Find top Hodlers by token """
         with SessionManager.session() as session:
-            rows = session.query(Hodler).filter(token_name=token_name).all()
+            rows = (
+                session.query(HodlerModel)
+                .filter_by(token_name=token_name)
+                .order_by(HodlerModel.amount.desc())
+                .limit(limit)
+            )
 
         hodlers = [
             Hodler(
