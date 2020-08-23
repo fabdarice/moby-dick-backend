@@ -1,5 +1,5 @@
 release: pip install .
-release: alembic upgrade HEAD
+release: alembic upgrade +1
 web: uwsgi --ini=uwsgi.ini --http-socket=127.0.0.1:8080
 worker: celery worker --loglevel=info -Q main -A app.celeryconfig -O fair
 
