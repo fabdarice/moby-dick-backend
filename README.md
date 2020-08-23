@@ -13,3 +13,10 @@
 * virtualenv build
 * source build/bin/activate
 * ./start.sh 
+
+
+# Endpoints 
+* POST /tokens
+    * Create tokens and fetch (celery) all top hodlers
+* GET /hodlers?token=[TOKEN]&limit=[LIMIT]
+    * Fetch top hodlers for a token - Limit (Default: top 100)
