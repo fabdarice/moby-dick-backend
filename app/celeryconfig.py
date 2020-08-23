@@ -4,8 +4,8 @@ from celery import Celery
 
 imports = 'app.tasks.hodler'
 
-broker_url = os.environ.get('REDIS_URI')
-backend_url = os.environ.get('REDIS_URI')
+broker_url = os.environ.get('REDIS_URL')
+backend_url = os.environ.get('REDIS_URL')
 
 task_acks_late = True
 task_routes = {

@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.utils.borg import Borg
 
-DATABASE_URI = os.environ.get('DATABASE_URI')
+DATABASE_URI = os.environ.get('DATABASE_URL')
 
 
 class SessionManagerBorg(Borg):

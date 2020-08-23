@@ -8,9 +8,9 @@ from app.controllers.token import TokenController
 from app.utils.session import SessionManager
 
 app = Flask(__name__)
-db_uri = os.environ.get('DATABASE_URI', None)
+db_uri = os.environ.get('DATABASE_URL', None)
 if not db_uri:
-    app.logger.error('DATABASE_URI is not set')
+    app.logger.error('DATABASE_URL is not set')
 SessionManager.configure(db_uri)
 
 
