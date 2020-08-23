@@ -83,23 +83,30 @@ class BlockchainService:
         token.synced = True
         self.token_svc.update_token(token)
 
-    def _parse_event(self, hodlers: Dict[str, Dict], event, token_name: str):
+    def _parse_event(self, hodlers: Dict[str, Dict], event, token: Token):
         """Parse Transfer Event and update amount for seller/buyer"""
         seller = event['args']['from']
         buyer = event['args']['to']
         amount = event['args']['tokens']
         for hodler in [seller, buyer]:
-            if hodler not in hodlers:
+            if (
+                hodler not in hodlers
+                and hodler != token
+                and hodler != token.contract_address
+                and hodler != '0x0000000000000000000000000000000000000000'
+            ):
                 hodlers[hodler] = {
                     'amount': 0,
                     'number_transactions': 0,
-                    'token_name': token_name,
+                    'token_name': token.name,
                     'address': hodler,
                 }
-        hodlers[seller]['amount'] -= amount
-        hodlers[seller]['number_transactions'] += 1
-        hodlers[buyer]['amount'] += amount
-        hodlers[buyer]['number_transactions'] += 1
+        if seller in hodlers:
+            hodlers[seller]['amount'] -= amount
+            hodlers[seller]['number_transactions'] += 1
+        if buyer in hodlers:
+            hodlers[buyer]['amount'] += amount
+            hodlers[buyer]['number_transactions'] += 1
 
     def _get_abi(self, contract_address: str) -> str:
         """Fetch a contract ABI"""
