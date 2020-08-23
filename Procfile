@@ -1,3 +1,3 @@
-web: uwsgi --ini=uwsgi.ini --http-socket=0.0.0.0:8080
+web: uwsgi --ini=uwsgi.ini
 worker: celery worker --loglevel=info -Q main -A app.celeryconfig -O fair
 
