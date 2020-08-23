@@ -1,5 +1,5 @@
 release: pip install .
-release: alembic upgrade +1
-web: FLASK_APP=routes.py FLASK_ENV=production flask run
+release: alembic upgrade HEAD
+web: uwsgi --ini=uwsgi.ini --http-socket=127.0.0.1:8080
 worker: celery worker --loglevel=info -Q main -A app.celeryconfig -O fair
 

@@ -30,3 +30,7 @@ def get_top_hodlers():
     hodler_ctl = HodlerController()
     hodlers = hodler_ctl.find_top_hodler_by_token_name(token_name, limit)
     return {'code': HTTPStatus.OK, 'hodlers': hodlers}
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
