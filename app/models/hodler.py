@@ -12,7 +12,7 @@ class HodlerModel(BaseModel):
     __tablename__ = 'hodlers'
 
     id = Column(Integer, primary_key=True)
-    address = Column(String(128), index=True, unique=True, nullable=False)
+    address = Column(String(128), index=True, unique=False, nullable=False)
     number_transactions = Column(Integer, nullable=True)
     amount = Column(String(64), nullable=False)
     token_name = Column(String(8), ForeignKey(TokenModel.name))
