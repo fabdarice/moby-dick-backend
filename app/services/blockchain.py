@@ -15,7 +15,7 @@ from app.services.token import TokenService
 from app.ttypes.token import Token
 
 ETHERSCAN_API = 'https://api.etherscan.io/api'
-BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 500))
+BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 100))
 logger = get_task_logger(__name__)
 
 
@@ -52,6 +52,7 @@ class BlockchainService:
         eth_last_block = self._get_latest_block_number()
         token_last_block = token.block_creation
         counter = 0
+        max_retry = 10
         while token_last_block != eth_last_block:
             try:
                 to_block = min(token_last_block + BLOCK_THRESHOLD, eth_last_block)
@@ -63,16 +64,18 @@ class BlockchainService:
                     self._parse_event(hodlers, event, token)
 
                 token_last_block = min(eth_last_block, to_block)
-                time.sleep(0.05)
+                time.sleep(0.5)
                 token.last_block = token_last_block
                 counter += 1
                 if counter % 10 == 0:
                     self.token_svc.update_token(token)
                     print(f'{token.last_block}/{eth_last_block}')
             except ConnectionClosed as e:
+                max_retry -= 1
                 logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')
-                self.connection()
-                continue
+                if max_retry > 0:
+                    self.connection()
+                    continue
         filter_empty_hodlers = []
         for hodler_addr, hodler in hodlers.items():
             if hodler['amount'] < 10:
