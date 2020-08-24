@@ -1,13 +1,14 @@
 import json
-import logging
 import os
 import time
 from collections import defaultdict
 from typing import Dict
 
 import requests
+from celery.utils.log import get_task_logger
 from web3 import Web3
 from web3.eth import Contract
+from websockets.exceptions import ConnectionClosed
 
 from app.services.hodler import HodlerService
 from app.services.token import TokenService
@@ -15,6 +16,7 @@ from app.ttypes.token import Token
 
 ETHERSCAN_API = 'https://api.etherscan.io/api'
 BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 500))
+logger = get_task_logger(__name__)
 
 
 class BlockchainService:
@@ -30,14 +32,14 @@ class BlockchainService:
         self.web3 = Web3(Web3.WebsocketProvider(infura_ws))
         self.infura_ws = infura_ws
         if not self.web3.isConnected():
-            logging.error(f'Web3 is not Connected.')
+            logger.error(f'Web3 is not Connected.')
         self.etherscan_api_key = etherscan_api_key
 
     def connection(self) -> None:
         """Connection to web3 if connection is closed"""
         if self.web3.isConnected():
             return
-        logging.info('Connecting to web3..')
+        logger.info('Connecting to web3..')
         self.web3 = Web3(Web3.WebsocketProvider(self.infura_ws))
 
     def create_all_tokens_hodlers(self, token: Token) -> None:
@@ -58,7 +60,7 @@ class BlockchainService:
                 )
                 event_list = transfer_filter.get_all_entries()
                 for event in event_list:
-                    self._parse_event(hodlers, event, token.name)
+                    self._parse_event(hodlers, event, token)
 
                 token_last_block = min(eth_last_block, to_block)
                 time.sleep(0.05)
@@ -67,13 +69,13 @@ class BlockchainService:
                 if counter % 10 == 0:
                     self.token_svc.update_token(token)
                     print(f'{token.last_block}/{eth_last_block}')
-            except Exception as e:
-                logging.error(f'Web3 connection failed {str(e)}. Reconnecting..')
+            except ConnectionClosed as e:
+                logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')
                 self.connection()
                 continue
         filter_empty_hodlers = []
         for hodler_addr, hodler in hodlers.items():
-            if hodler['amount'] < 100000000000000:
+            if hodler['amount'] < 10:
                 filter_empty_hodlers.append(hodler_addr)
             hodler['amount'] = str(hodler['amount']).zfill(32)
 
@@ -85,15 +87,16 @@ class BlockchainService:
 
     def _parse_event(self, hodlers: Dict[str, Dict], event, token: Token):
         """Parse Transfer Event and update amount for seller/buyer"""
-        seller = event['args']['from']
-        buyer = event['args']['to']
-        amount = event['args']['tokens']
+        amount_keyword = 'tokens' if 'tokens' in event['args'] else 'value'
+        seller = event['args']['from'].lower()
+        buyer = event['args']['to'].lower()
+        amount = event['args'][amount_keyword]
         for hodler in [seller, buyer]:
             if (
                 hodler not in hodlers
-                and hodler != token
-                and hodler != token.contract_address
+                and hodler != token.contract_address.lower()
                 and hodler != '0x0000000000000000000000000000000000000000'
+                and hodler != token.uniswap_address.lower()
             ):
                 hodlers[hodler] = {
                     'amount': 0,

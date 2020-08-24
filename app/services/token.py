@@ -14,9 +14,9 @@ class TokenService:
     def create_token(self, payload: Dict[str, Any]) -> Token:
         """Create Token in the database and then fetch all events since creation"""
         token = TokenModel(
-            name=payload['name'],
-            contract_address=payload['contract_address'],
-            uniswap_address=payload['uniswap_address'],
+            name=payload['name'].upper(),
+            contract_address=payload['contract_address'].lower(),
+            uniswap_address=payload['uniswap_address'].lower(),
             events=payload['events'],
             block_creation=int(payload['block_creation']),
             last_block=int(payload['block_creation']),
