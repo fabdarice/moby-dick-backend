@@ -18,5 +18,7 @@
 # Endpoints 
 * POST /tokens
     * Create tokens and fetch (celery) all top hodlers
+* GET /tokens
+    * Fetch all supported Tokens 
 * GET /hodlers?token=[TOKEN]&limit=[LIMIT]
     * Fetch top hodlers for a token - Limit (Default: top 100)
