@@ -55,7 +55,7 @@ class HodlerService:
                 if hodler_addr in existing_hodlers:
                     new_amount = int(hodler['amount']) + int(existing_hodlers['hodler_addr'].amount)
 
-                    hodler['amount'] = str(new_amount).zfill(token.decimal)
+                    hodler['amount'] = str(new_amount).zfill(32)
                     hodler['number_transactions'] += existing_hodlers[
                         hodler_addr
                     ].number_transactions

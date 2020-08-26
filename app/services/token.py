@@ -65,6 +65,8 @@ class TokenService:
                 contract_address=row.contract_address,
                 uniswap_address=row.uniswap_address,
                 events=row.events,
+                decimal=row.decimal,
+                total_supply=row.total_supply,
                 synced=row.synced,
                 last_block=row.last_block,
                 block_creation=row.block_creation,

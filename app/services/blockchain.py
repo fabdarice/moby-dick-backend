@@ -79,7 +79,7 @@ class BlockchainService:
         for hodler_addr, hodler in hodlers.items():
             if hodler['amount'] == 0:
                 filter_empty_hodlers.append(hodler_addr)
-            hodler['amount'] = str(hodler['amount']).zfill(token.decimal)
+            hodler['amount'] = str(hodler['amount']).zfill(32)
 
         for hodler_addr in filter_empty_hodlers:
             del hodlers[hodler_addr]
