@@ -38,5 +38,13 @@ def get_top_hodlers():
     return {'code': HTTPStatus.OK, 'hodlers': hodlers}
 
 
+@app.route('/tokens', methods=['GET'])
+@cross_origin()
+def get_tokens():
+    token_ctl = TokenController()
+    tokens = token_ctl.get_tokens()
+    return {'code': HTTPStatus.OK, 'tokens': [token.to_dict() for token in tokens]}
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

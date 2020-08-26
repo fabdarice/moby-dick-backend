@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from app.services.token import TokenService
 from app.tasks.hodler import create_token_hodlers_task
@@ -18,3 +18,6 @@ class TokenController:
     def get_token_by_name(self, name: str) -> Token:
         """Retrieve a Token row by its name"""
         return self.token_svc.get_token_by_name(name)
+
+    def get_tokens(self) -> List[Token]:
+        return self.token_svc.get_tokens()

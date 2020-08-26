@@ -16,3 +16,4 @@ class HodlerModel(BaseModel):
     number_transactions = Column(Integer, nullable=True)
     amount = Column(String(64), nullable=False)
     token_name = Column(String(8), ForeignKey(TokenModel.name))
+    last_transaction = Column(String(128), nullable=True)

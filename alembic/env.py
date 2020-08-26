@@ -1,14 +1,16 @@
-import logging
+# import logging
 import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import create_engine
-from sqlalchemy_utils import create_database
 
 from app.models.base import BaseModel
 from app.models.hodler import HodlerModel  # noqa
 from app.models.token import TokenModel  # noqa
+
+# from sqlalchemy_utils import create_database
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -41,10 +43,10 @@ def run_migrations_online():
 
     """
     db_uri = os.environ.get('DATABASE_URL')
-    try:
-        create_database(db_uri)
-    except Exception:
-        logging.info('Failed to create database.  Probably already exists.')
+    # try:
+    #     create_database(db_uri)
+    # except Exception:
+    #     logging.info('Failed to create database.  Probably already exists.')
 
     connectable = create_engine(db_uri)
 

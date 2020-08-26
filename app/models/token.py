@@ -17,6 +17,8 @@ class TokenModel(BaseModel):
     uniswap_address = Column(String(128), index=False, unique=False, nullable=False)
     events = Column(JSONB, nullable=False)
     synced = Column(Boolean, nullable=False)
+    decimal = Column(Integer, nullable=False)
+    total_supply = Column(Integer, nullable=True)
 
     last_block = Column(Integer, index=False, unique=False)
     block_creation = Column(Integer, index=False, unique=False)

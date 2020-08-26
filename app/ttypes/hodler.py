@@ -7,3 +7,4 @@ class Hodler:
     number_transactions: int
     amount: int
     token_name: str
+    last_transaction: str

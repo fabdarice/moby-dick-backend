@@ -44,11 +44,9 @@ class BlockchainService:
 
     def create_all_tokens_hodlers(self, token: Token) -> None:
         """Fetch all events from Creation and calculate token hodlers"""
-        contract = self._init_contract(self.web3.toChecksumAddress(token.contract_address))
+        contract = self.init_contract(self.web3.toChecksumAddress(token.contract_address))
 
         hodlers = defaultdict(dict)
-        # hodlers = self.hodler_svc.find_by_token_name(token.name)
-        # hodlers_by_address = {hodler.address: hodler for hodler in hodlers}
         eth_last_block = self._get_latest_block_number()
         token_last_block = token.block_creation
         counter = 0
@@ -67,6 +65,7 @@ class BlockchainService:
                 time.sleep(0.5)
                 token.last_block = token_last_block
                 counter += 1
+                eth_last_block = self._get_latest_block_number()
                 if counter % 10 == 0:
                     self.token_svc.update_token(token)
                     print(f'{token.last_block}/{eth_last_block}')
@@ -78,9 +77,9 @@ class BlockchainService:
                     continue
         filter_empty_hodlers = []
         for hodler_addr, hodler in hodlers.items():
-            if hodler['amount'] < 10:
+            if hodler['amount'] == 0:
                 filter_empty_hodlers.append(hodler_addr)
-            hodler['amount'] = str(hodler['amount']).zfill(32)
+            hodler['amount'] = str(hodler['amount']).zfill(token.decimal)
 
         for hodler_addr in filter_empty_hodlers:
             del hodlers[hodler_addr]
@@ -106,13 +105,16 @@ class BlockchainService:
                     'number_transactions': 0,
                     'token_name': token.name,
                     'address': hodler,
+                    'last_transaction': '0',
                 }
         if seller in hodlers:
             hodlers[seller]['amount'] -= amount
             hodlers[seller]['number_transactions'] += 1
+            hodlers[seller]['last_transaction'] = f'-{amount}'
         if buyer in hodlers:
             hodlers[buyer]['amount'] += amount
             hodlers[buyer]['number_transactions'] += 1
+            hodlers[buyer]['last_transaction'] = f'+{amount}'
 
     def _get_abi(self, contract_address: str) -> str:
         """Fetch a contract ABI"""
@@ -122,7 +124,7 @@ class BlockchainService:
         contract_abi = json_resp['result']
         return contract_abi
 
-    def _init_contract(self, contract_address: str) -> Contract:
+    def init_contract(self, contract_address: str) -> Contract:
         """Initialize a web3.eth.Contract object"""
         abi = self._get_abi(contract_address)
         contract = self.web3.eth.contract(address=contract_address, abi=abi)
@@ -133,3 +135,21 @@ class BlockchainService:
         resp = requests.get(url)
         hex_block = json.loads(resp.text)["result"]
         return int(hex_block, 16)
+
+    def update_hodlers(self, token: Token) -> None:
+        """Sync the blockchain for Transfer events and update the top hodlers"""
+        eth_last_block = self._get_latest_block_number()
+        contract = self.init_contract(self.web3.toChecksumAddress(token.contract_address))
+        event_hodlers = defaultdict(dict)
+        to_block = min(token.last_block + BLOCK_THRESHOLD, eth_last_block)
+        if token.last_block < eth_last_block:
+            transfer_filter = contract.events.Transfer.createFilter(
+                fromBlock=token.last_block + 1, toBlock=to_block
+            )
+            event_list = transfer_filter.get_all_entries()
+            for event in event_list:
+                self._parse_event(event_hodlers, event, token)
+
+        self.hodler_svc.update_hodlers(event_hodlers, token)
+        token.last_block = eth_last_block
+        self.token_svc.update_token(token)
