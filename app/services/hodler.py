@@ -53,17 +53,19 @@ class HodlerService:
             existing_hodlers = {row.address: row for row in rows}
             for hodler_addr, hodler in hodlers_by_address.items():
                 if hodler_addr in existing_hodlers:
-                    new_amount = int(hodler['amount']) + int(existing_hodlers['hodler_addr'].amount)
+                    new_amount = int(hodler['amount']) + int(existing_hodlers[hodler_addr].amount)
 
                     hodler['amount'] = str(new_amount).zfill(32)
                     hodler['number_transactions'] += existing_hodlers[
                         hodler_addr
                     ].number_transactions
 
+        hodler_table = HodlerModel.__table__.c
+
         with SessionManager.use_connection() as c:
             stmt = insert(HodlerModel).values(list(hodlers_by_address.values()))
             stmt = stmt.on_conflict_do_update(
-                index_elements=[HodlerModel.c.address, HodlerModel.c.token_name],
-                set_=dict(data=stmt.excluded.data),
+                constraint="hodler_address_token_unique",
+                set_={hodler_table.address.name: stmt.excluded.address},
             )
             c.execute(stmt)

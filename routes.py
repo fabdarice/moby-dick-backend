@@ -51,6 +51,7 @@ def get_tokens():
 @cross_origin()
 def blockchain_sync():
     blockchain_events_sync_all_contracts.apply()
+    return {'code': HTTPStatus.ACCEPTED}
 
 
 if __name__ == '__main__':

@@ -35,4 +35,4 @@ def blockchain_events_sync_all_contracts(max_retries=None):
     tokens = token_ctl.get_tokens()
     synced_tokens = [token for token in tokens if token.synced]
     for synced_token in synced_tokens:
-        blockchain_events_sync_one_contract.apply_async(synced_token.to_dict())
+        blockchain_events_sync_one_contract.apply(args=[synced_token.to_dict()])

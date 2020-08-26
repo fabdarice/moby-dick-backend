@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy.schema import UniqueConstraint
 
 from app.models.base import BaseModel
 from app.models.token import TokenModel
@@ -17,3 +18,7 @@ class HodlerModel(BaseModel):
     amount = Column(String(64), nullable=False)
     token_name = Column(String(8), ForeignKey(TokenModel.name))
     last_transaction = Column(String(128), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('address', 'token_name', name='hodler_address_token_unique'),
+    )
