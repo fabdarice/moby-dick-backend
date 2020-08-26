@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Dict
 
 
 @dataclass
@@ -7,7 +7,7 @@ class Token:
     name: str
     contract_address: str
     uniswap_address: str
-    events: Dict[str, Any]
+    events: str
     decimal: int
     total_supply: int
     synced: bool

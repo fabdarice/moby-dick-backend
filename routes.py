@@ -6,6 +6,7 @@ from flask_cors import CORS, cross_origin
 
 from app.controllers.hodler import HodlerController
 from app.controllers.token import TokenController
+from app.tasks.blockchain import blockchain_events_sync_all_contracts
 from app.utils.session import SessionManager
 
 app = Flask(__name__)
@@ -44,6 +45,12 @@ def get_tokens():
     token_ctl = TokenController()
     tokens = token_ctl.get_tokens()
     return {'code': HTTPStatus.OK, 'tokens': [token.to_dict() for token in tokens]}
+
+
+@app.route('/blockchain_sync', methods=['POST'])
+@cross_origin()
+def blockchain_sync():
+    blockchain_events_sync_all_contracts.apply()
 
 
 if __name__ == '__main__':
