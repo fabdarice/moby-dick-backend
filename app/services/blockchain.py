@@ -68,7 +68,7 @@ class BlockchainService:
                 eth_last_block = self._get_latest_block_number()
                 if counter % 10 == 0:
                     self.token_svc.update_token(token)
-                    print(f'{token.last_block}/{eth_last_block}')
+                    print(f'Processing blocks {token.last_block}/{eth_last_block} ..')
             except ConnectionClosed as e:
                 max_retry -= 1
                 logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')
@@ -86,6 +86,7 @@ class BlockchainService:
         self.hodler_svc.save_hodlers(list(hodlers.values()))
         token.synced = True
         self.token_svc.update_token(token)
+        print(f'Top Hodlers for Token {token.name} has completed!')
 
     def _parse_event(self, hodlers: Dict[str, Dict], event, token: Token):
         """Parse Transfer Event and update amount for seller/buyer"""

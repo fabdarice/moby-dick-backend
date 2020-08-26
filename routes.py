@@ -33,7 +33,7 @@ def create_tokens():
 @cross_origin()
 def get_top_hodlers():
     token_name = request.args.get('token')
-    limit = int(request.args.get('limit'))
+    limit = int(request.args.get('limit', 100))
     hodler_ctl = HodlerController()
     hodlers = hodler_ctl.find_top_hodler_by_token_name(token_name, limit)
     return {'code': HTTPStatus.OK, 'hodlers': hodlers}
