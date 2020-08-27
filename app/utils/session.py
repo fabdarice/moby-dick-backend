@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import contextmanager
 from typing import Iterator
@@ -30,7 +31,7 @@ class SessionManagerBorg(Borg):
             connection.close()
 
     def configure(self, db_url: str) -> None:
-        print('Configuring database..')
+        logging.info('Configuring database..')
         self.db_url = db_url
         self.engine = create_engine(
             db_url, echo=False, use_batch_mode=True, connect_args={'connect_timeout': 1}

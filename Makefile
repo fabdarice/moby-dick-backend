@@ -11,3 +11,7 @@ flask:
 celery: redis
 	celery worker --loglevel=info -Q main -A app.celeryconfig -O fair
 
+celery-beat:
+	celery -A app.celeryconfig beat --pidfile="/tmp/celerybeat.pid"
+
+

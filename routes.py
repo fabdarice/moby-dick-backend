@@ -11,7 +11,7 @@ from app.utils.session import SessionManager
 
 app = Flask(__name__)
 cors = CORS(app)
-app.config['CORS_HEADES'] = 'Content-Type'
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 db_uri = os.environ.get('DATABASE_URL', None)
 if not db_uri:

@@ -6,46 +6,41 @@ from typing import Dict
 
 import requests
 from celery.utils.log import get_task_logger
-from web3 import Web3
 from web3.eth import Contract
 from websockets.exceptions import ConnectionClosed
 
 from app.services.hodler import HodlerService
 from app.services.token import TokenService
 from app.ttypes.token import Token
+from app.utils.w3 import Web3ProviderSession
 
 ETHERSCAN_API = 'https://api.etherscan.io/api'
+INFURA_WS_URI = os.environ.get('INFURA_WS_URI')
+INFURA_HUY = 'wss://mainnet.infura.io/ws/v3/90409d9baead4e1c9cd9a54cb8774216'
+
 BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 100))
 logger = get_task_logger(__name__)
 
 
 class BlockchainService:
     def __init__(
-        self,
-        token_svc: TokenService,
-        hodler_svc: HodlerService,
-        infura_ws: str,
-        etherscan_api_key: str,
+        self, token_svc: TokenService, hodler_svc: HodlerService, etherscan_api_key: str,
     ) -> None:
         self.hodler_svc = hodler_svc
         self.token_svc = token_svc
-        self.web3 = Web3(Web3.WebsocketProvider(infura_ws))
-        self.infura_ws = infura_ws
-        if not self.web3.isConnected():
-            logger.error(f'Web3 is not Connected.')
         self.etherscan_api_key = etherscan_api_key
+        self.w3 = Web3ProviderSession.use_connection()
 
-    def connection(self) -> None:
+    def ensure_web3_connection(self) -> None:
         """Connection to web3 if connection is closed"""
-        if self.web3.isConnected():
+        if self.w3.isConnected():
             return
-        logger.info('Connecting to web3..')
-        self.web3 = Web3(Web3.WebsocketProvider(self.infura_ws))
+        self.w3 = Web3ProviderSession.use_connection()
 
     def create_all_tokens_hodlers(self, token: Token) -> None:
         """Fetch all events from Creation and calculate token hodlers"""
-        contract = self.init_contract(self.web3.toChecksumAddress(token.contract_address))
-
+        self.ensure_web3_connection()
+        contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
         hodlers = defaultdict(dict)
         eth_last_block = self._get_latest_block_number()
         token_last_block = token.block_creation
@@ -73,17 +68,18 @@ class BlockchainService:
                 max_retry -= 1
                 logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')
                 if max_retry > 0:
-                    self.connection()
+                    self.ensure_web3_connection()
                     continue
         filter_empty_hodlers = []
         for hodler_addr, hodler in hodlers.items():
-            if hodler['amount'] == 0:
+            if hodler['amount'] < (token.decimal * 10) / 5:
                 filter_empty_hodlers.append(hodler_addr)
             hodler['amount'] = str(hodler['amount']).zfill(32)
 
         for hodler_addr in filter_empty_hodlers:
             del hodlers[hodler_addr]
-        self.hodler_svc.save_hodlers(list(hodlers.values()))
+        if hodlers:
+            self.hodler_svc.save_hodlers(list(hodlers.values()))
         token.synced = True
         self.token_svc.update_token(token)
         print(f'Top Hodlers for Token {token.name} has completed!')
@@ -128,7 +124,7 @@ class BlockchainService:
     def init_contract(self, contract_address: str) -> Contract:
         """Initialize a web3.eth.Contract object"""
         abi = self._get_abi(contract_address)
-        contract = self.web3.eth.contract(address=contract_address, abi=abi)
+        contract = self.w3.eth.contract(address=contract_address, abi=abi)
         return contract
 
     def _get_latest_block_number(self) -> int:
@@ -139,8 +135,9 @@ class BlockchainService:
 
     def update_hodlers(self, token: Token) -> None:
         """Sync the blockchain for Transfer events and update the top hodlers"""
+        self.ensure_web3_connection()
         eth_last_block = self._get_latest_block_number()
-        contract = self.init_contract(self.web3.toChecksumAddress(token.contract_address))
+        contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
         event_hodlers = defaultdict(dict)
         to_block = min(token.last_block + BLOCK_THRESHOLD, eth_last_block)
         if token.last_block < eth_last_block:
@@ -151,6 +148,7 @@ class BlockchainService:
             for event in event_list:
                 self._parse_event(event_hodlers, event, token)
 
-        self.hodler_svc.update_hodlers(event_hodlers, token)
-        token.last_block = eth_last_block
+        if event_hodlers:
+            self.hodler_svc.update_hodlers(event_hodlers, token)
+        token.last_block = to_block
         self.token_svc.update_token(token)

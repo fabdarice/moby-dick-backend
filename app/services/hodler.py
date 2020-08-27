@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql import func
 
 from app.models.hodler import HodlerModel
 from app.ttypes.hodler import Hodler
@@ -53,12 +54,18 @@ class HodlerService:
             existing_hodlers = {row.address: row for row in rows}
             for hodler_addr, hodler in hodlers_by_address.items():
                 if hodler_addr in existing_hodlers:
+                    print(f'Existing Hodler: {hodler_addr}')
                     new_amount = int(hodler['amount']) + int(existing_hodlers[hodler_addr].amount)
 
-                    hodler['amount'] = str(new_amount).zfill(32)
+                    hodler['amount'] = str(new_amount)
                     hodler['number_transactions'] += existing_hodlers[
                         hodler_addr
                     ].number_transactions
+                else:
+                    print(f'New Hodler: {hodler_addr}')
+
+                hodler['amount'] = str(hodler['amount']).zfill(32)
+                hodler['updated_at'] = func.current_timestamp()
 
         hodler_table = HodlerModel.__table__.c
 
@@ -66,6 +73,10 @@ class HodlerService:
             stmt = insert(HodlerModel).values(list(hodlers_by_address.values()))
             stmt = stmt.on_conflict_do_update(
                 constraint="hodler_address_token_unique",
-                set_={hodler_table.address.name: stmt.excluded.address},
+                set_={
+                    hodler_table.amount.name: stmt.excluded.amount,
+                    hodler_table.number_transactions.name: stmt.excluded.number_transactions,
+                    hodler_table.updated_at.name: stmt.excluded.updated_at,
+                },
             )
             c.execute(stmt)
