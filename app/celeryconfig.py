@@ -6,7 +6,7 @@ imports = ('app.tasks.hodler', 'app.tasks.blockchain')
 
 broker_url = os.environ.get('REDIS_URL')
 backend_url = os.environ.get('REDIS_URL')
-block_frequency = os.environ.get('BLOCK_FREQUENCY', 10)
+block_frequency = os.environ.get('BLOCK_FREQUENCY', 30)
 
 task_acks_late = True
 task_routes = {
