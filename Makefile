@@ -9,9 +9,6 @@ flask:
 	FLASK_APP=routes.py FLASK_ENV=development flask run
 
 celery: redis
-	celery worker --loglevel=info -Q main -A app.celeryconfig -O fair
-
-celery-beat:
-	celery -A app.celeryconfig beat --pidfile="/tmp/celerybeat.pid"
+	celery worker --loglevel=info -Q main -A app.celeryconfig -O fair --beat --pidfile='/tmp/celerybeat.pid'
 
 

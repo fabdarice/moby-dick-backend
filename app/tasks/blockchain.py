@@ -16,8 +16,6 @@ def blockchain_events_sync_one_contract(token_dict: Dict[str, Any], max_retries=
     """This task will sync the blockchain for all events for a single contract
     and update the TOP hodlers
     """
-    print('entering blockchain_sync one contract')
-
     token = Token.from_dict(token_dict)
     if ETHERSCAN_API_KEY is None:
         raise Exception('INFURA_WS_URI or ETHERSCAN_API_KEY is not set')
@@ -32,7 +30,6 @@ def blockchain_events_sync_all_contracts(max_retries=None):
     """This task will sync the blockchain for each Token contract we support
     and update the top hodlers balance
     """
-    print('entering blockchain_sync')
     token_ctl = TokenController()
     tokens = token_ctl.get_tokens()
     synced_tokens = [token for token in tokens if token.synced]

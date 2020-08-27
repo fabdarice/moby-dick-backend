@@ -63,7 +63,7 @@ class BlockchainService:
                 eth_last_block = self._get_latest_block_number()
                 if counter % 10 == 0:
                     self.token_svc.update_token(token)
-                    print(f'Processing blocks {token.last_block}/{eth_last_block} ..')
+                    print(f'[{token.name}] Processing blocks {token.last_block}/{eth_last_block} ..')
             except ConnectionClosed as e:
                 max_retry -= 1
                 logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')

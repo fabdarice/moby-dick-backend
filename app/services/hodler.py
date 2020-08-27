@@ -54,15 +54,12 @@ class HodlerService:
             existing_hodlers = {row.address: row for row in rows}
             for hodler_addr, hodler in hodlers_by_address.items():
                 if hodler_addr in existing_hodlers:
-                    print(f'Existing Hodler: {hodler_addr}')
                     new_amount = int(hodler['amount']) + int(existing_hodlers[hodler_addr].amount)
 
                     hodler['amount'] = str(new_amount)
                     hodler['number_transactions'] += existing_hodlers[
                         hodler_addr
                     ].number_transactions
-                else:
-                    print(f'New Hodler: {hodler_addr}')
 
                 hodler['amount'] = str(hodler['amount']).zfill(32)
                 hodler['updated_at'] = func.current_timestamp()
@@ -76,6 +73,7 @@ class HodlerService:
                 set_={
                     hodler_table.amount.name: stmt.excluded.amount,
                     hodler_table.number_transactions.name: stmt.excluded.number_transactions,
+                    hodler_table.last_transaction.name: stmt.excluded.last_transaction,
                     hodler_table.updated_at.name: stmt.excluded.updated_at,
                 },
             )
