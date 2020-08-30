@@ -13,6 +13,12 @@ class Token:
     synced: bool
     last_block: str
     block_creation: str
+    watchlist_addresses: str
+    logo_url: str
+    twitter_url: str
+    telegram_url: str
+    website_url: str
+    coingecko_url: str
 
     def to_dict(self) -> Dict:
         return {
@@ -25,6 +31,12 @@ class Token:
             'synced': self.synced,
             'last_block': self.last_block,
             'block_creation': self.block_creation,
+            'watchlist_addresses': self.watchlist_addresses,
+            'logo_url': self.logo_url,
+            'twitter_url': self.twitter_url,
+            'telegram_url': self.telegram_url,
+            'website_url': self.website_url,
+            'coingecko_url': self.coingecko_url,
         }
 
     @classmethod
@@ -39,4 +51,10 @@ class Token:
             total_supply=token_dict['total_supply'],
             last_block=token_dict['last_block'],
             block_creation=token_dict['block_creation'],
+            watchlist_addresses=token_dict['watchlist_addresses'],
+            logo_url=token_dict['logo_url'],
+            twitter_url=token_dict['twitter_url'],
+            telegram_url=token_dict['telegram_url'],
+            website_url=token_dict['website_url'],
+            coingecko_url=token_dict['coingecko_url'],
         )

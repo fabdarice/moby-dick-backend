@@ -22,7 +22,7 @@ SessionManager.configure(db_uri)
 @app.route('/tokens', methods=['POST'])
 @cross_origin()
 def create_tokens():
-    payload = request.form
+    payload = request.json
     app.logger.info(f'Token Creation Request: {payload["name"]}')
     token_ctl = TokenController()
     token_ctl.create_token(payload)
