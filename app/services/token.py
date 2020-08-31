@@ -91,3 +91,9 @@ class TokenService:
             )
             for row in rows
         ]
+
+    def update_token_dict(self, token_dict: Dict[str, Any]) -> None:
+        """Update token in database"""
+        with SessionManager.session() as session:
+            row = session.query(TokenModel).filter_by(name=token_dict['name'])
+            row.update(token_dict)

@@ -21,3 +21,6 @@ class TokenController:
 
     def get_tokens(self) -> List[Token]:
         return self.token_svc.get_tokens()
+
+    def edit_token(self, payload: Dict[str, Any]) -> None:
+        self.token_svc.update_token_dict(payload)

@@ -29,6 +29,15 @@ def create_tokens():
     return {'code': HTTPStatus.CREATED}
 
 
+@app.route('/tokens/edit', methods=['POST'])
+@cross_origin()
+def update_token():
+    payload = request.json
+    token_ctl = TokenController()
+    token_ctl.edit_token(payload)
+    return {'code': HTTPStatus.OK}
+
+
 @app.route('/hodlers', methods=['GET'])
 @cross_origin()
 def get_top_hodlers():
