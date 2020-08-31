@@ -23,6 +23,12 @@ class TokenService:
             block_creation=int(payload['block_creation']),
             last_block=int(payload['block_creation']),
             synced=False,
+            watchlist_addresses=payload['watchlist_addresses'],
+            logo_url=payload['logo_url'],
+            twitter_url=payload['twitter_url'],
+            telegram_url=payload['telegram_url'],
+            website_url=payload['website_url'],
+            coingecko_url=payload['coingecko_url'],
         )
 
         with SessionManager.session() as session:
@@ -38,6 +44,12 @@ class TokenService:
             synced=token.synced,
             last_block=token.last_block,
             block_creation=token.block_creation,
+            watchlist_addresses=token.watchlist_addresses,
+            logo_url=token.logo_url,
+            twitter_url=token.twitter_url,
+            telegram_url=token.telegram_url,
+            website_url=token.website_url,
+            coingecko_url=token.coingecko_url,
         )
 
     def get_token_by_name(self, name: str) -> Token:
@@ -70,6 +82,12 @@ class TokenService:
                 synced=row.synced,
                 last_block=row.last_block,
                 block_creation=row.block_creation,
+                watchlist_addresses=row.watchlist_addresses,
+                logo_url=row.logo_url,
+                twitter_url=row.twitter_url,
+                telegram_url=row.telegram_url,
+                website_url=row.website_url,
+                coingecko_url=row.coingecko_url,
             )
             for row in rows
         ]

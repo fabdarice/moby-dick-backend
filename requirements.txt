@@ -8,5 +8,6 @@ celery[redis]==4.4.0
 wheel==0.35.1
 uwsgi==2.0.19.1
 flask-cors==3.0.7
+twilio==6.45.0
 dataclasses
 black

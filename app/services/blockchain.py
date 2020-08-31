@@ -11,6 +11,7 @@ from websockets.exceptions import ConnectionClosed
 
 from app.services.hodler import HodlerService
 from app.services.token import TokenService
+from app.services.twilio import TwilioService
 from app.ttypes.token import Token
 from app.utils.w3 import Web3ProviderSession
 
@@ -30,6 +31,7 @@ class BlockchainService:
         self.token_svc = token_svc
         self.etherscan_api_key = etherscan_api_key
         self.w3 = Web3ProviderSession.use_connection()
+        self.twilio_svc = TwilioService()
 
     def ensure_web3_connection(self) -> None:
         """Connection to web3 if connection is closed"""
@@ -63,7 +65,9 @@ class BlockchainService:
                 eth_last_block = self._get_latest_block_number()
                 if counter % 10 == 0:
                     self.token_svc.update_token(token)
-                    print(f'[{token.name}] Processing blocks {token.last_block}/{eth_last_block} ..')
+                    print(
+                        f'[{token.name}] Processing blocks {token.last_block}/{eth_last_block} ..'
+                    )
             except ConnectionClosed as e:
                 max_retry -= 1
                 logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')
@@ -90,6 +94,8 @@ class BlockchainService:
         seller = event['args']['from'].lower()
         buyer = event['args']['to'].lower()
         amount = event['args'][amount_keyword]
+        transaction_hash = event['transactionHash'].hex()
+        self._watch_list_for_token(token, seller, amount, transaction_hash)
         for hodler in [seller, buyer]:
             if (
                 hodler not in hodlers
@@ -112,6 +118,20 @@ class BlockchainService:
             hodlers[buyer]['amount'] += amount
             hodlers[buyer]['number_transactions'] += 1
             hodlers[buyer]['last_transaction'] = f'+{amount}'
+
+    def _watch_list_for_token(
+        self, token: Token, sender: str, amount: str, transaction_hash: str
+    ) -> None:
+        """Look at the watch list and send an sms if its an outgoing transfer"""
+        if token.watchlist_addresses:
+            watchlist_addresses_lower = [
+                addr.lower() for addr in token.watchlist_addresses.split(',')
+            ]
+            if sender.lower() in watchlist_addresses_lower:
+                amount_with_decimal = str(round(amount / 10 ** int(token.decimal), 2))
+                self.twilio_svc.send_message(
+                    f'TRANSFER OUT: {sender} for {amount_with_decimal} {token.name} (https://etherscan.io/tx/{transaction_hash})'
+                )
 
     def _get_abi(self, contract_address: str) -> str:
         """Fetch a contract ABI"""
