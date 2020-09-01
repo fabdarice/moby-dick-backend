@@ -19,7 +19,7 @@ ETHERSCAN_API = 'https://api.etherscan.io/api'
 INFURA_WS_URI = os.environ.get('INFURA_WS_URI')
 INFURA_HUY = 'wss://mainnet.infura.io/ws/v3/90409d9baead4e1c9cd9a54cb8774216'
 
-BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 100))
+BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 20))
 logger = get_task_logger(__name__)
 
 
