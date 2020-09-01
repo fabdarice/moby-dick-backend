@@ -45,7 +45,7 @@ class BlockchainService:
         contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
         hodlers = defaultdict(dict)
         eth_last_block = self._get_latest_block_number()
-        token_last_block = token.block_creation
+        token_last_block = token.block_creation - 1
         counter = 0
         max_retry = 10
         while token_last_block != eth_last_block:
@@ -76,7 +76,11 @@ class BlockchainService:
                     continue
         filter_empty_hodlers = []
         for hodler_addr, hodler in hodlers.items():
-            if hodler['amount'] < (token.decimal * 10) / 5:
+            if hodler['amount'] < (10 ** (token.decimal - 4)) or (
+                hodler_addr == token.contract_address.lower()
+                or hodler_addr == '0x0000000000000000000000000000000000000000'
+                or hodler_addr == token.uniswap_address.lower()
+            ):
                 filter_empty_hodlers.append(hodler_addr)
             hodler['amount'] = str(hodler['amount']).zfill(32)
 
@@ -97,12 +101,7 @@ class BlockchainService:
         transaction_hash = event['transactionHash'].hex()
         self._watch_list_for_token(token, seller, amount, transaction_hash)
         for hodler in [seller, buyer]:
-            if (
-                hodler not in hodlers
-                and hodler != token.contract_address.lower()
-                and hodler != '0x0000000000000000000000000000000000000000'
-                and hodler != token.uniswap_address.lower()
-            ):
+            if hodler not in hodlers:
                 hodlers[hodler] = {
                     'amount': 0,
                     'number_transactions': 0,
@@ -110,14 +109,13 @@ class BlockchainService:
                     'address': hodler,
                     'last_transaction': '0',
                 }
-        if seller in hodlers:
-            hodlers[seller]['amount'] -= amount
-            hodlers[seller]['number_transactions'] += 1
-            hodlers[seller]['last_transaction'] = f'-{amount}'
-        if buyer in hodlers:
-            hodlers[buyer]['amount'] += amount
-            hodlers[buyer]['number_transactions'] += 1
-            hodlers[buyer]['last_transaction'] = f'+{amount}'
+        hodlers[seller]['amount'] -= amount
+        hodlers[seller]['number_transactions'] += 1
+        hodlers[seller]['last_transaction'] = f'-{amount}'
+
+        hodlers[buyer]['amount'] += amount
+        hodlers[buyer]['number_transactions'] += 1
+        hodlers[buyer]['last_transaction'] = f'+{amount}'
 
     def _watch_list_for_token(
         self, token: Token, sender: str, amount: str, transaction_hash: str

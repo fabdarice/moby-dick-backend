@@ -64,7 +64,7 @@ def blockchain_sync():
     return {'code': HTTPStatus.ACCEPTED}
 
 
-@app.routes('/watchers', methods=['POST'])
+@app.route('/watchers', methods=['POST'])
 @cross_origin()
 def upsert_watcher():
     payload = request.json
