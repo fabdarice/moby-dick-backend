@@ -74,18 +74,7 @@ class BlockchainService:
                 if max_retry > 0:
                     self.ensure_web3_connection()
                     continue
-        filter_empty_hodlers = []
-        for hodler_addr, hodler in hodlers.items():
-            if hodler['amount'] < (10 ** (token.decimal - 4)) or (
-                hodler_addr == token.contract_address.lower()
-                or hodler_addr == '0x0000000000000000000000000000000000000000'
-                or hodler_addr == token.uniswap_address.lower()
-            ):
-                filter_empty_hodlers.append(hodler_addr)
-            hodler['amount'] = str(hodler['amount']).zfill(32)
-
-        for hodler_addr in filter_empty_hodlers:
-            del hodlers[hodler_addr]
+        self._filter_uniswap_contract_low_amount(hodlers, token)
         if hodlers:
             self.hodler_svc.save_hodlers(list(hodlers.values()))
         token.synced = True
@@ -166,7 +155,23 @@ class BlockchainService:
             for event in event_list:
                 self._parse_event(event_hodlers, event, token)
 
+        self._filter_uniswap_contract_low_amount(event_hodlers, token)
         if event_hodlers:
             self.hodler_svc.update_hodlers(event_hodlers, token)
         token.last_block = to_block
         self.token_svc.update_token(token)
+
+    def _filter_uniswap_contract_low_amount(self, hodlers: Dict, token: Token):
+        """Filter out uniswap address, contract address & small amount"""
+        filter_empty_hodlers = []
+        for hodler_addr, hodler in hodlers.items():
+            if hodler['amount'] < (10 ** (token.decimal - 4)) or (
+                hodler_addr == token.contract_address.lower()
+                or hodler_addr == '0x0000000000000000000000000000000000000000'
+                or hodler_addr == token.uniswap_address.lower()
+            ):
+                filter_empty_hodlers.append(hodler_addr)
+            hodler['amount'] = str(hodler['amount']).zfill(32)
+
+        for hodler_addr in filter_empty_hodlers:
+            del hodlers[hodler_addr]
