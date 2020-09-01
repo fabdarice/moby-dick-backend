@@ -1,9 +1,11 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Boolean, Column, String
 
 from app.models.base import BaseModel
 
 
 class WatcherModel(BaseModel):
-    __table__ = 'watchers'
+    __tablename__ = 'watchers'
 
-    address = Column(String(128), nullable=False, unique=True)
+    address = Column(String(128), primary_key=True)
+    active = Column(Boolean)
+    alias = Column(String(128))

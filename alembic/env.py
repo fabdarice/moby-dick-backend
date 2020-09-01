@@ -8,6 +8,7 @@ from sqlalchemy import create_engine
 from app.models.base import BaseModel
 from app.models.hodler import HodlerModel  # noqa
 from app.models.token import TokenModel  # noqa
+from app.models.watcher import WatcherModel  # noqa
 
 # from sqlalchemy_utils import create_database
 

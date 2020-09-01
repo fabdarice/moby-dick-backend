@@ -6,6 +6,7 @@ from flask_cors import CORS, cross_origin
 
 from app.controllers.hodler import HodlerController
 from app.controllers.token import TokenController
+from app.controllers.watcher import WatcherController
 from app.tasks.blockchain import blockchain_events_sync_all_contracts
 from app.utils.session import SessionManager
 
@@ -61,6 +62,16 @@ def get_tokens():
 def blockchain_sync():
     blockchain_events_sync_all_contracts.apply()
     return {'code': HTTPStatus.ACCEPTED}
+
+
+@app.routes('/watchers', methods=['POST'])
+@cross_origin()
+def upsert_watcher():
+    payload = request.json
+    app.logger.info(f'Watcher Upsert Request: {payload["address"]}')
+    watcher_ctl = WatcherController()
+    watcher_ctl.upsert_watcher(payload)
+    return {'code': HTTPStatus.CREATED}
 
 
 if __name__ == '__main__':
