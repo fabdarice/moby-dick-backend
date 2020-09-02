@@ -77,7 +77,7 @@ class BlockchainService:
                 if max_retry > 0:
                     self.ensure_web3_connection()
                     continue
-        self._filter_uniswap_contract_low_amount(hodlers, token)
+        self._filter_uniswap_contract(hodlers, token)
         if hodlers:
             self.hodler_svc.save_hodlers(list(hodlers.values()))
         token.synced = True
@@ -158,7 +158,7 @@ class BlockchainService:
             for event in event_list:
                 self._parse_event(event_hodlers, event, token)
 
-        self._filter_uniswap_contract_low_amount(event_hodlers, token)
+        self._filter_uniswap_contract(event_hodlers, token)
         if event_hodlers:
             self.hodler_svc.update_hodlers(event_hodlers, token)
         token.last_block = to_block
