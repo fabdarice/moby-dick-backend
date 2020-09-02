@@ -34,7 +34,12 @@ class SessionManagerBorg(Borg):
         logging.info('Configuring database..')
         self.db_url = db_url
         self.engine = create_engine(
-            db_url, echo=False, use_batch_mode=True, connect_args={'connect_timeout': 1}
+            db_url,
+            echo=False,
+            use_batch_mode=True,
+            connect_args={'connect_timeout': 1},
+            pool_size=20,
+            max_overflow=0,
         )
         self.maker = sessionmaker(bind=self.engine)
 

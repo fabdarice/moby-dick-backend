@@ -25,7 +25,10 @@ logger = get_task_logger(__name__)
 
 class BlockchainService:
     def __init__(
-        self, token_svc: TokenService, hodler_svc: HodlerService, etherscan_api_key: str,
+        self,
+        token_svc: TokenService,
+        hodler_svc: HodlerService,
+        etherscan_api_key: str,
     ) -> None:
         self.hodler_svc = hodler_svc
         self.token_svc = token_svc
@@ -161,17 +164,17 @@ class BlockchainService:
         token.last_block = to_block
         self.token_svc.update_token(token)
 
-    def _filter_uniswap_contract_low_amount(self, hodlers: Dict, token: Token):
+    def _filter_uniswap_contract(self, hodlers: Dict, token: Token):
         """Filter out uniswap address, contract address & small amount"""
-        filter_empty_hodlers = []
+        filter_hodlers = []
         for hodler_addr, hodler in hodlers.items():
-            if hodler['amount'] < (10 ** (token.decimal - 4)) or (
+            if (
                 hodler_addr == token.contract_address.lower()
                 or hodler_addr == '0x0000000000000000000000000000000000000000'
                 or hodler_addr == token.uniswap_address.lower()
             ):
-                filter_empty_hodlers.append(hodler_addr)
+                filter_hodlers.append(hodler_addr)
             hodler['amount'] = str(hodler['amount']).zfill(32)
 
-        for hodler_addr in filter_empty_hodlers:
+        for hodler_addr in filter_hodlers:
             del hodlers[hodler_addr]
