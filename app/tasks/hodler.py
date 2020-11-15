@@ -26,7 +26,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'redis'})
 def memcache_lock(lock_id):
     timeout_at = time.monotonic() + LOCK_EXPIRE - 3
     # cache.add fails if the key already exists
-    status = cache.add(lock_id)
+    status = cache.add(lock_id LOCK_EXPIRE)
     try:
         yield status
     finally:
