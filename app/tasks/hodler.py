@@ -23,26 +23,20 @@ cache = Cache(app, config={'CACHE_TYPE': 'redis'})
 
 
 @contextmanager
-def memcache_lock(lock_id, oid):
+def memcache_lock(lock_id):
     timeout_at = time.monotonic() + LOCK_EXPIRE - 3
     # cache.add fails if the key already exists
-    status = cache.add(lock_id, oid, LOCK_EXPIRE)
+    status = cache.add(lock_id)
     try:
         yield status
     finally:
-        # memcache delete is very slow, but we have to use it to take
-        # advantage of using add() for atomic locking
         if time.monotonic() < timeout_at and status:
-            # don't release the lock if we exceeded the timeout
-            # to lessen the chance of releasing an expired lock
-            # owned by someone else
-            # also don't release the lock if we didn't acquire it
             cache.delete(lock_id)
 
 
 @celery.task
-def create_token_hodlers_task(self, token_dict: Dict):
-    with memcache_lock('create_token_hodlers', self.app.oid) as acquired:
+def create_token_hodlers_task(token_dict: Dict):
+    with memcache_lock('create_token_hodlers') as acquired:
         if acquired:
             token = Token.from_dict(token_dict)
             if ETHERSCAN_API_KEY is None:
