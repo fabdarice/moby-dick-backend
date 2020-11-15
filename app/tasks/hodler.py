@@ -1,7 +1,11 @@
+import time
 import os
 from typing import Dict
 
+from flask import Flask
+from contextlib import contextmanager
 from celery.utils.log import get_task_logger
+from flask_caching import Cache
 
 from app.celeryconfig import celery
 from app.services.blockchain import BlockchainService
@@ -12,15 +16,39 @@ from app.ttypes.token import Token
 logger = get_task_logger(__name__)
 
 ETHERSCAN_API_KEY = os.environ.get('ETHERSCAN_API_KEY')
+LOCK_EXPIRE = 60  # Lock expires in 1 minute
+
+app = Flask(__name__)
+cache = Cache(app, config={'CACHE_TYPE': 'redis'})
+
+
+@contextmanager
+def memcache_lock(lock_id, oid):
+    timeout_at = time.monotonic() + LOCK_EXPIRE - 3
+    # cache.add fails if the key already exists
+    status = cache.add(lock_id, oid, LOCK_EXPIRE)
+    try:
+        yield status
+    finally:
+        # memcache delete is very slow, but we have to use it to take
+        # advantage of using add() for atomic locking
+        if time.monotonic() < timeout_at and status:
+            # don't release the lock if we exceeded the timeout
+            # to lessen the chance of releasing an expired lock
+            # owned by someone else
+            # also don't release the lock if we didn't acquire it
+            cache.delete(lock_id)
 
 
 @celery.task
-def create_token_hodlers_task(token_dict: Dict):
-    token = Token.from_dict(token_dict)
-    if ETHERSCAN_API_KEY is None:
-        raise Exception('INFURA_WS_URI or ETHERSCAN_API_KEY is not set')
-    hodler_svc = HodlerService()
-    token_svc = TokenService()
+def create_token_hodlers_task(self, token_dict: Dict):
+    with memcache_lock('create_token_hodlers', self.app.oid) as acquired:
+        if acquired:
+            token = Token.from_dict(token_dict)
+            if ETHERSCAN_API_KEY is None:
+                raise Exception('INFURA_WS_URI or ETHERSCAN_API_KEY is not set')
+            hodler_svc = HodlerService()
+            token_svc = TokenService()
 
-    blockchain_svc = BlockchainService(token_svc, hodler_svc, ETHERSCAN_API_KEY)
-    blockchain_svc.create_all_tokens_hodlers(token)
+            blockchain_svc = BlockchainService(token_svc, hodler_svc, ETHERSCAN_API_KEY)
+            blockchain_svc.create_all_tokens_hodlers(token)
