@@ -12,12 +12,14 @@ class TwilioService:
     client = None
 
     def __init__(self):
+        pass
         # Find these values at https://twilio.com/user/account
-        account_sid = TWILIO_ACCOUNT_SID
-        auth_token = TWILIO_AUTH_TOKEN
-        self.phone_numbers = AGENT_PHONE_NUMBERS.split(',')
-        self.client = Client(account_sid, auth_token)
+        # account_sid = TWILIO_ACCOUNT_SID
+        # auth_token = TWILIO_AUTH_TOKEN
+        # self.phone_numbers = AGENT_PHONE_NUMBERS.split(',')
+        # self.client = Client(account_sid, auth_token)
 
     def send_message(self, message):
-        for phone_number in self.phone_numbers:
-            self.client.messages.create(to=phone_number, from_=TWILIO_FROM_NUMBER, body=message)
+        pass
+        # for phone_number in self.phone_numbers:
+        #     self.client.messages.create(to=phone_number, from_=TWILIO_FROM_NUMBER, body=message)

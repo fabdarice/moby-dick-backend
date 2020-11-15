@@ -84,12 +84,29 @@ class BlockchainService:
         self.token_svc.update_token(token)
         print(f'Top Hodlers for Token {token.name} has completed!')
 
+    def _parse_amount_event(self, event) -> str:
+        for k in ['tokens', 'value', '_value', '_tokens']:
+            if k in event['args']:
+                return event['args'][k]
+        raise Exception(f'Amount not found in event {event}')
+
+    def _parse_seller_event(self, event) -> str:
+        for k in ['from', '_from']:
+            if k in event['args']:
+                return event['args'][k].lower()
+        raise Exception(f'Seller not found in event {event}')
+
+    def _parse_buyer_event(self, event) -> str:
+        for k in ['to', '_to']:
+            if k in event['args']:
+                return event['args'][k].lower()
+        raise Exception(f'Buyer not found in event {event}')
+
     def _parse_event(self, hodlers: Dict[str, Dict], event, token: Token):
         """Parse Transfer Event and update amount for seller/buyer"""
-        amount_keyword = 'tokens' if 'tokens' in event['args'] else 'value'
-        seller = event['args']['from'].lower()
-        buyer = event['args']['to'].lower()
-        amount = event['args'][amount_keyword]
+        seller = self._parse_seller_event(event)
+        buyer = self._parse_buyer_event(event)
+        amount = self._parse_amount_event(event)
         transaction_hash = event['transactionHash'].hex()
         self._watch_list_for_token(token, seller, amount, transaction_hash)
         for hodler in [seller, buyer]:
