@@ -40,10 +40,8 @@ def blockchain_events_sync_one_contract(self, token_dict: Dict[str, Any], max_re
     """This task will sync the blockchain for all events for a single contract
     and update the TOP hodlers
     """
-    print("ENTER blockchain_events_sync_one_contract")
     with memcache_lock(token_dict['name'], self.app.oid) as acquired:
         if acquired:
-            print("NO LOCK")
             token = Token.from_dict(token_dict)
             hodler_svc = HodlerService()
             token_svc = TokenService()
