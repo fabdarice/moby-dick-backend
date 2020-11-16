@@ -34,6 +34,35 @@ class TokenService:
         with SessionManager.session() as session:
             session.add(token)
 
+        return self._model_to_dt(token)
+
+    def get_token_by_name(self, name: str) -> Token:
+        """Retrieve a Token row by its name"""
+        with SessionManager.session() as session:
+            token = session.query(TokenModel).filter_by(name=name).one()
+            if not token:
+                logging.error(f'Token `{name}` not found.')
+        return self._model_to_dt(token)
+
+    def update_token(self, token: Token) -> None:
+        """Update token in database"""
+        with SessionManager.session() as session:
+            row = session.query(TokenModel).filter_by(name=token.name)
+            row.update(asdict(token))
+
+    def get_tokens(self) -> List[Token]:
+        with SessionManager.session() as session:
+            rows = session.query(TokenModel).all()
+
+        return [self._model_to_dt(row) for row in rows]
+
+    def update_token_dict(self, token_dict: Dict[str, Any]) -> None:
+        """Update token in database"""
+        with SessionManager.session() as session:
+            row = session.query(TokenModel).filter_by(name=token_dict['name'])
+            row.update(token_dict)
+
+    def _model_to_dt(self, token: TokenModel) -> Token:
         return Token(
             name=token.name,
             contract_address=token.contract_address,
@@ -51,49 +80,3 @@ class TokenService:
             website_url=token.website_url,
             coingecko_url=token.coingecko_url,
         )
-
-    def get_token_by_name(self, name: str) -> Token:
-        """Retrieve a Token row by its name"""
-        with SessionManager.session() as session:
-            token = session.query(TokenModel).filter(name=name).one()
-
-            if not token:
-                logging.error(f'Token `{name}` not found.')
-        return token
-
-    def update_token(self, token: Token) -> None:
-        """Update token in database"""
-        with SessionManager.session() as session:
-            row = session.query(TokenModel).filter_by(name=token.name)
-            row.update(asdict(token))
-
-    def get_tokens(self) -> List[Token]:
-        with SessionManager.session() as session:
-            rows = session.query(TokenModel).all()
-
-        return [
-            Token(
-                name=row.name,
-                contract_address=row.contract_address,
-                uniswap_address=row.uniswap_address,
-                events=row.events,
-                decimal=row.decimal,
-                total_supply=row.total_supply,
-                synced=row.synced,
-                last_block=row.last_block,
-                block_creation=row.block_creation,
-                watchlist_addresses=row.watchlist_addresses,
-                logo_url=row.logo_url,
-                twitter_url=row.twitter_url,
-                telegram_url=row.telegram_url,
-                website_url=row.website_url,
-                coingecko_url=row.coingecko_url,
-            )
-            for row in rows
-        ]
-
-    def update_token_dict(self, token_dict: Dict[str, Any]) -> None:
-        """Update token in database"""
-        with SessionManager.session() as session:
-            row = session.query(TokenModel).filter_by(name=token_dict['name'])
-            row.update(token_dict)

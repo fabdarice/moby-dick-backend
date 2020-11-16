@@ -1,18 +1,18 @@
 import os
 from http import HTTPStatus
 
-from flask import Flask, request
-from flask_cors import CORS, cross_origin
+from flask import request
+from flask_cors import cross_origin
+from wsgi import app
 
 from app.controllers.hodler import HodlerController
 from app.controllers.token import TokenController
 from app.controllers.watcher import WatcherController
-from app.tasks.blockchain import blockchain_events_sync_all_contracts
+from app.tasks.blockchain import (
+    blockchain_events_sync_all_contracts,
+    blockchain_events_sync_one_contract,
+)
 from app.utils.session import SessionManager
-
-app = Flask(__name__)
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 db_uri = os.environ.get('DATABASE_URL', None)
 if not db_uri:
@@ -72,6 +72,16 @@ def upsert_watcher():
     watcher_ctl = WatcherController()
     watcher_ctl.upsert_watcher(payload)
     return {'code': HTTPStatus.CREATED}
+
+
+@app.route('/tokens/sync', methods=['POST'])
+@cross_origin()
+def sync_token():
+    payload = request.json
+    token_ctl = TokenController()
+    token = token_ctl.get_token_by_name(payload['name'])
+    blockchain_events_sync_one_contract.apply(args=[token.to_dict()])
+    return {'code': HTTPStatus.ACCEPTED}
 
 
 if __name__ == '__main__':
