@@ -20,7 +20,7 @@ if not db_uri:
 SessionManager.configure(db_uri)
 
 
-@app.route('/tokens', methods=['POST'])
+@app.route('/api/tokens', methods=['POST'])
 @cross_origin()
 def create_tokens():
     payload = request.json
@@ -30,7 +30,7 @@ def create_tokens():
     return {'code': HTTPStatus.CREATED}
 
 
-@app.route('/tokens/edit', methods=['POST'])
+@app.route('/api/tokens/edit', methods=['POST'])
 @cross_origin()
 def update_token():
     payload = request.json
@@ -39,7 +39,7 @@ def update_token():
     return {'code': HTTPStatus.OK}
 
 
-@app.route('/hodlers', methods=['GET'])
+@app.route('/api/hodlers', methods=['GET'])
 @cross_origin()
 def get_top_hodlers():
     token_name = request.args.get('token')
@@ -49,7 +49,7 @@ def get_top_hodlers():
     return {'code': HTTPStatus.OK, 'hodlers': hodlers}
 
 
-@app.route('/tokens', methods=['GET'])
+@app.route('/api/tokens', methods=['GET'])
 @cross_origin()
 def get_tokens():
     token_ctl = TokenController()
@@ -57,14 +57,14 @@ def get_tokens():
     return {'code': HTTPStatus.OK, 'tokens': [token.to_dict() for token in tokens]}
 
 
-@app.route('/blockchain_sync', methods=['POST'])
+@app.route('/api/blockchain_sync', methods=['POST'])
 @cross_origin()
 def blockchain_sync():
     blockchain_events_sync_all_contracts.apply()
     return {'code': HTTPStatus.ACCEPTED}
 
 
-@app.route('/watchers', methods=['POST'])
+@app.route('/api/watchers', methods=['POST'])
 @cross_origin()
 def upsert_watcher():
     payload = request.json
@@ -74,7 +74,7 @@ def upsert_watcher():
     return {'code': HTTPStatus.CREATED}
 
 
-@app.route('/tokens/sync', methods=['POST'])
+@app.route('/api/tokens/sync', methods=['POST'])
 @cross_origin()
 def sync_token():
     payload = request.json
