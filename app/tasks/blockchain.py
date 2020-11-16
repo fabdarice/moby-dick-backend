@@ -4,7 +4,6 @@ from typing import Any, Dict
 from dataclasses import asdict
 
 from flask_caching import Cache
-from flask import Flask
 from contextlib import contextmanager
 
 from app.celeryconfig import celery
@@ -13,7 +12,7 @@ from app.services.blockchain import BlockchainService
 from app.services.hodler import HodlerService
 from app.services.token import TokenService
 from app.ttypes.token import Token
-from wsgi import app
+from flask_app import app
 
 ETHERSCAN_API_KEY = os.environ.get('ETHERSCAN_API_KEY')
 if ETHERSCAN_API_KEY is None:
@@ -29,7 +28,6 @@ def memcache_lock(lock_id, oid):
     timeout_at = time.monotonic() + LOCK_EXPIRE - 3
     # cache.add fails if the key already exists
     status = cache.add(lock_id, oid, LOCK_EXPIRE)
-    print(f"FAB {status}")
     try:
         yield status
     finally:
