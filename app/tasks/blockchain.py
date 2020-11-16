@@ -20,7 +20,7 @@ if ETHERSCAN_API_KEY is None:
 
 LOCK_EXPIRE = 60  # Lock expires in 1 minute
 
-cache = Cache(app, config={'CACHE_TYPE': 'redis'})
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 
 @contextmanager
@@ -40,15 +40,17 @@ def blockchain_events_sync_one_contract(self, token_dict: Dict[str, Any], max_re
     """This task will sync the blockchain for all events for a single contract
     and update the TOP hodlers
     """
+    print("ENTER blockchain_events_sync_one_contract")
     with memcache_lock(token_dict['name'], self.app.oid) as acquired:
         if acquired:
+            print("NO LOCK")
             token = Token.from_dict(token_dict)
             hodler_svc = HodlerService()
             token_svc = TokenService()
             blockchain_svc = BlockchainService(token_svc, hodler_svc, ETHERSCAN_API_KEY)
             token = blockchain_svc.update_hodlers(token)
-            if not token.synced:
-                blockchain_events_sync_one_contract.apply(args=[asdict(token)])
+            if token.synced == False:
+                blockchain_events_sync_one_contract.apply_async(args=[asdict(token)])
 
 
 @celery.task

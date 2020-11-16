@@ -2,6 +2,7 @@ import os
 from http import HTTPStatus
 
 from flask import request
+from flask_cors import cross_origin
 
 from app.controllers.hodler import HodlerController
 from app.controllers.token import TokenController
@@ -20,6 +21,7 @@ SessionManager.configure(db_uri)
 
 
 @app.route('/api/tokens', methods=['POST'])
+@cross_origin()
 def create_tokens():
     payload = request.json
     app.logger.info(f'Token Creation Request: {payload["name"]}')
@@ -29,6 +31,7 @@ def create_tokens():
 
 
 @app.route('/api/tokens/edit', methods=['POST'])
+@cross_origin()
 def update_token():
     payload = request.json
     token_ctl = TokenController()
@@ -37,6 +40,7 @@ def update_token():
 
 
 @app.route('/api/hodlers', methods=['GET'])
+@cross_origin()
 def get_top_hodlers():
     token_name = request.args.get('token')
     limit = int(request.args.get('limit', 100))
@@ -46,6 +50,7 @@ def get_top_hodlers():
 
 
 @app.route('/api/tokens', methods=['GET'])
+@cross_origin()
 def get_tokens():
     token_ctl = TokenController()
     tokens = token_ctl.get_tokens()
@@ -53,12 +58,14 @@ def get_tokens():
 
 
 @app.route('/api/blockchain_sync', methods=['POST'])
+@cross_origin()
 def blockchain_sync():
     blockchain_events_sync_all_contracts.apply()
     return {'code': HTTPStatus.ACCEPTED}
 
 
 @app.route('/api/watchers', methods=['POST'])
+@cross_origin()
 def upsert_watcher():
     payload = request.json
     app.logger.info(f'Watcher Upsert Request: {payload["address"]}')
@@ -68,6 +75,7 @@ def upsert_watcher():
 
 
 @app.route('/api/tokens/sync', methods=['POST'])
+@cross_origin()
 def sync_token():
     payload = request.json
     token_ctl = TokenController()
@@ -77,4 +85,4 @@ def sync_token():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)
+    app.run()
