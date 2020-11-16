@@ -16,7 +16,7 @@ from app.ttypes.token import Token
 from app.utils.w3 import Web3ProviderSession
 
 ETHERSCAN_API = 'https://api.etherscan.io/api'
-BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 20000))
+BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 2000))
 logger = get_task_logger(__name__)
 
 
