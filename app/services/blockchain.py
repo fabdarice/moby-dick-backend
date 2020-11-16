@@ -33,20 +33,26 @@ class BlockchainService:
         self.w3 = Web3ProviderSession.use_connection()
         self.twilio_svc = TwilioService()
 
-    def update_hodlers(self, token: Token) -> Token:
+    def update_hodlers(self, token: Token, block_threshold=BLOCK_THRESHOLD) -> Token:
         """Sync the blockchain for Transfer events and update the top hodlers"""
         self.ensure_web3_connection()
         eth_last_block = self._get_latest_block_number()
         contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
         event_hodlers = defaultdict(dict)
-        to_block = min(token.last_block + BLOCK_THRESHOLD, eth_last_block)
-        if token.last_block < eth_last_block:
-            transfer_filter = contract.events.Transfer.createFilter(
-                fromBlock=token.last_block + 1, toBlock=to_block
-            )
-            event_list = transfer_filter.get_all_entries()
-            for event in event_list:
-                self._parse_event(event_hodlers, event, token)
+        try:
+            to_block = min(token.last_block + block_threshold, eth_last_block)
+            if token.last_block < eth_last_block:
+                transfer_filter = contract.events.Transfer.createFilter(
+                    fromBlock=token.last_block + 1, toBlock=to_block
+                )
+                event_list = transfer_filter.get_all_entries()
+                for event in event_list:
+                    self._parse_event(event_hodlers, event, token)
+        except Exception:
+            if block_threshold < 20:
+                raise Exception("Could not update Hodlers")
+            else:
+                return self.update_hodlers(token, int(block_threshold / 2))
 
         self._filter_uniswap_contract(event_hodlers, token)
         if event_hodlers:
