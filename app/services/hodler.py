@@ -36,12 +36,6 @@ class HodlerService:
 
         return hodlers
 
-    def save_hodlers(self, hodlers: List[Dict]) -> None:
-        """ Save New Hodlers in database """
-        insert_stmt = insert(HodlerModel).values(hodlers)
-        with SessionManager.use_connection() as c:
-            c.execute(insert_stmt)
-
     def update_hodlers(self, hodlers_by_address: Dict[str, Any], token: Token) -> None:
         """ Update existing hodlers amount + Create if they do not exist yet """
         with SessionManager.session() as session:

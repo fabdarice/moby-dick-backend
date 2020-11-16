@@ -10,7 +10,7 @@ block_frequency = os.environ.get('BLOCK_FREQUENCY', 30)
 
 task_acks_late = True
 task_routes = {
-    'app.tasks.hodler.create_token_hodlers_task': {'queue': 'main'},
+    'app.tasks.hodler.blockchain_events_sync_one_contract': {'queue': 'main'},
     'app.tasks.blockchain.blockchain_events_sync_all_contracts': {'queue': 'main'},
 }
 

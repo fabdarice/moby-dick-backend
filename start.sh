@@ -1,1 +1,1 @@
-make -j3 celery flask celery-beat
+make -j2 celery flask

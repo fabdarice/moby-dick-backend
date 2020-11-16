@@ -16,9 +16,6 @@ from app.ttypes.token import Token
 from app.utils.w3 import Web3ProviderSession
 
 ETHERSCAN_API = 'https://api.etherscan.io/api'
-INFURA_WS_URI = os.environ.get('INFURA_WS_URI')
-INFURA_HUY = 'wss://mainnet.infura.io/ws/v3/90409d9baead4e1c9cd9a54cb8774216'
-
 BLOCK_THRESHOLD = int(os.environ.get('BLOCK_THRESHOLD', 200))
 logger = get_task_logger(__name__)
 
@@ -36,53 +33,36 @@ class BlockchainService:
         self.w3 = Web3ProviderSession.use_connection()
         self.twilio_svc = TwilioService()
 
+    def update_hodlers(self, token: Token) -> Token:
+        """Sync the blockchain for Transfer events and update the top hodlers"""
+        self.ensure_web3_connection()
+        eth_last_block = self._get_latest_block_number()
+        contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
+        event_hodlers = defaultdict(dict)
+        to_block = min(token.last_block + BLOCK_THRESHOLD, eth_last_block)
+        if token.last_block < eth_last_block:
+            transfer_filter = contract.events.Transfer.createFilter(
+                fromBlock=token.last_block + 1, toBlock=to_block
+            )
+            event_list = transfer_filter.get_all_entries()
+            for event in event_list:
+                self._parse_event(event_hodlers, event, token)
+
+        self._filter_uniswap_contract(event_hodlers, token)
+        if event_hodlers:
+            self.hodler_svc.update_hodlers(event_hodlers, token)
+        token.last_block = to_block
+        if token.last_block >= eth_last_block:
+            token.synced = True
+        self.token_svc.update_token(token)
+        print(f'[{token.name}] Processing blocks {token.last_block}/{eth_last_block} ..')
+        return token
+
     def ensure_web3_connection(self) -> None:
         """Connection to web3 if connection is closed"""
         if self.w3.isConnected():
             return
         self.w3 = Web3ProviderSession.use_connection()
-
-    def create_all_tokens_hodlers(self, token: Token) -> None:
-        """Fetch all events from Creation and calculate token hodlers"""
-        self.ensure_web3_connection()
-        contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
-        hodlers = defaultdict(dict)
-        eth_last_block = self._get_latest_block_number()
-        token_last_block = token.block_creation - 1
-        counter = 0
-        max_retry = 10
-        while token_last_block != eth_last_block:
-            try:
-                to_block = min(token_last_block + BLOCK_THRESHOLD, eth_last_block)
-                transfer_filter = contract.events.Transfer.createFilter(
-                    fromBlock=token_last_block + 1, toBlock=to_block
-                )
-                event_list = transfer_filter.get_all_entries()
-                for event in event_list:
-                    self._parse_event(hodlers, event, token)
-
-                token_last_block = min(eth_last_block, to_block)
-                time.sleep(0.5)
-                token.last_block = token_last_block
-                counter += 1
-                eth_last_block = self._get_latest_block_number()
-                if counter % 10 == 0:
-                    self.token_svc.update_token(token)
-                    print(
-                        f'[{token.name}] Processing blocks {token.last_block}/{eth_last_block} ..'
-                    )
-            except ConnectionClosed as e:
-                max_retry -= 1
-                logger.error(f'Web3 connection failed {str(e)}. Reconnecting..')
-                if max_retry > 0:
-                    self.ensure_web3_connection()
-                    continue
-        self._filter_uniswap_contract(hodlers, token)
-        if hodlers:
-            self.hodler_svc.save_hodlers(list(hodlers.values()))
-        token.synced = True
-        self.token_svc.update_token(token)
-        print(f'Top Hodlers for Token {token.name} has completed!')
 
     def _parse_amount_event(self, event) -> str:
         for k in ['tokens', 'value', '_value', '_tokens']:
@@ -159,27 +139,6 @@ class BlockchainService:
         resp = requests.get(url)
         hex_block = json.loads(resp.text)["result"]
         return int(hex_block, 16)
-
-    def update_hodlers(self, token: Token) -> None:
-        """Sync the blockchain for Transfer events and update the top hodlers"""
-        self.ensure_web3_connection()
-        eth_last_block = self._get_latest_block_number()
-        contract = self.init_contract(self.w3.toChecksumAddress(token.contract_address))
-        event_hodlers = defaultdict(dict)
-        to_block = min(token.last_block + BLOCK_THRESHOLD, eth_last_block)
-        if token.last_block < eth_last_block:
-            transfer_filter = contract.events.Transfer.createFilter(
-                fromBlock=token.last_block + 1, toBlock=to_block
-            )
-            event_list = transfer_filter.get_all_entries()
-            for event in event_list:
-                self._parse_event(event_hodlers, event, token)
-
-        self._filter_uniswap_contract(event_hodlers, token)
-        if event_hodlers:
-            self.hodler_svc.update_hodlers(event_hodlers, token)
-        token.last_block = to_block
-        self.token_svc.update_token(token)
 
     def _filter_uniswap_contract(self, hodlers: Dict, token: Token):
         """Filter out uniswap address, contract address & small amount"""
