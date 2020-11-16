@@ -72,7 +72,7 @@ def sync_token():
     payload = request.json
     token_ctl = TokenController()
     token = token_ctl.get_token_by_name(payload['name'])
-    blockchain_events_sync_one_contract.apply(args=[token.to_dict()])
+    blockchain_events_sync_one_contract.apply_async(args=[token.to_dict()])
     return {'code': HTTPStatus.ACCEPTED}
 
 

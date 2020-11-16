@@ -48,7 +48,7 @@ def blockchain_events_sync_one_contract(self, token_dict: Dict[str, Any], max_re
             blockchain_svc = BlockchainService(token_svc, hodler_svc, ETHERSCAN_API_KEY)
             token = blockchain_svc.update_hodlers(token)
             if not token.synced:
-                blockchain_events_sync_one_contract.apply_async(args=[asdict(token)])
+                blockchain_events_sync_one_contract.apply(args=[asdict(token)])
 
 
 @celery.task
