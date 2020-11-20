@@ -29,6 +29,7 @@ class SessionManagerBorg(Borg):
             yield connection
         finally:
             connection.close()
+            connection.dispose()
 
     def configure(self, db_url: str) -> None:
         logging.info('Configuring database..')
@@ -38,7 +39,6 @@ class SessionManagerBorg(Borg):
             echo=False,
             use_batch_mode=True,
             connect_args={'connect_timeout': 1},
-            pool_size=20,
             max_overflow=0,
         )
         self.maker = sessionmaker(bind=self.engine)
@@ -58,7 +58,8 @@ class SessionManagerBorg(Borg):
             db_session and db_session.rollback()
             raise
         finally:
-            db_session and db_session.close()
+            db_session.close()
+            db_session.dispose()
 
 
 SessionManager = SessionManagerBorg()

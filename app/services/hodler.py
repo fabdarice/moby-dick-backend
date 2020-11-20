@@ -23,18 +23,18 @@ class HodlerService:
                 .limit(limit)
             )
 
-        hodlers = [
-            Hodler(
-                address=row.address,
-                number_transactions=row.number_transactions,
-                amount=row.amount,
-                token_name=row.token_name,
-                last_transaction=row.last_transaction,
-            )
-            for row in rows
-        ]
+            hodlers = [
+                Hodler(
+                    address=row.address,
+                    number_transactions=row.number_transactions,
+                    amount=row.amount,
+                    token_name=row.token_name,
+                    last_transaction=row.last_transaction,
+                )
+                for row in rows
+            ]
 
-        return hodlers
+            return hodlers
 
     def update_hodlers(self, hodlers_by_address: Dict[str, Any], token: Token) -> None:
         """ Update existing hodlers amount + Create if they do not exist yet """
