@@ -3,7 +3,6 @@ import os
 from contextlib import contextmanager
 from typing import Iterator
 
-from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -37,9 +36,9 @@ class SessionManagerBorg(Borg):
         self.engine = create_engine(
             db_url,
             echo=False,
-            poolclass=NullPool,
             use_batch_mode=True,
             connect_args={'connect_timeout': 1},
+            max_overflow=0,
         )
         self.maker = sessionmaker(bind=self.engine)
 
